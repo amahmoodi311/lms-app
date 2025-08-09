@@ -77,46 +77,42 @@ jobs:
         run: docker push ${{ vars.DOCKER_USERNAME}}/api:latest
       - name: push frontend image
         run: docker push ${{ vars.DOCKER_USERNAME}}/web:latest
+        
+backend:
+   needs: 
+    - database
+    - build
+   runs-on: deploy
+   steps:
+    - name: Pull backend image
+      run: docker pull ${{ vars.DOCKER_USERNAME }}/api:latest
 
-  backend:
-    needs: 
-      - database
+    - name: Run backend container
+      run: |
+        IMAGE_NAME="${{ vars.DOCKER_USERNAME }}/api:latest"
+        CONTAINER_NAME="backend"
+        NETWORK_NAME="lmsnetwork"
+        DATABASE_URL="postgresql://postgres:${{ secrets.DB_PASSWORD }}@lmsdb:5432/postgres"
+
+        if docker ps -a --format '{{ .Names }}' | grep -wq "$CONTAINER_NAME"; then
+          echo "Removing old backend container..."
+          docker rm -f "$CONTAINER_NAME"
+        fi
+
+        docker run -dt --name "$CONTAINER_NAME" \
+          -p 3000:3000 \
+          --network "$NETWORK_NAME" \
+          -e DATABASE_URL="$DATABASE_URL" \
+          "$IMAGE_NAME"
+
+        docker ps --filter "name=$CONTAINER_NAME"
+
+  
+   frontend:
+     needs: 
       - build
-    runs-on: deploy
-    steps:
-      - name: pull the image
-        run: docker pull ${{ vars.DOCKER_USERNAME}}/api1:latest
-      - name: Run the backend
-        run: |
-            IMAGE_NAME="amamhmoodi311/api1:latest"
-            CONTAINER_NAME="backend"
-            NETWORK_NAME="lmsnetwork"
-            DATABASE_URL="postgresql://postgres:${{ secrets.DB_PASSWORD }}@lmsdb:5432/postgres"
-
-            if docker ps -a --format '{{ .Names }}' | grep -wq "$CONTAINER_NAME"; then
-              echo "Stopping and removing $CONTAINER_NAME..."
-              docker rm -f "$CONTAINER_NAME"
-            fi
-
-            if docker images -q "$IMAGE_NAME" > /dev/null; then
-              docker rmi "$IMAGE_NAME" || true
-            fi
-
-             docker pull "$IMAGE_NAME"
-
-             docker run -dt --name "$CONTAINER_NAME" \
-               -p 3000:3000 \
-               --network "$NETWORK_NAME" \
-               -e DATABASE_URL="$DATABASE_URL" \
-               "$IMAGE_NAME"
-
-               docker ps --filter "name=$CONTAINER_NAME"
-
-  frontend:
-    needs: 
-      - build
-    runs-on: deploy
-    steps:
+     runs-on: deploy
+     steps:
       - name: pull the image
         run: docker pull ${{ vars.DOCKER_USERNAME}}/web1:latest
       - name: Run the frontend
