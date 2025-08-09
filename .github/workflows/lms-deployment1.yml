@@ -71,28 +71,23 @@ jobs:
         run: docker push ${{ vars.DOCKER_USERNAME }}/web1:latest
         
   backend:
-    needs:
+    needs: 
       - database
       - build
     runs-on: deploy
     steps:
       - name: pull the image
-        run: docker pull ${{ vars.DOCKER_USERNAME }}/api1:latest
-
+        run: docker pull ${{ vars.DOCKER_USERNAME}}/api1:latest
       - name: Run the backend
         run: |
           if docker ps -a --format '{{ .Names }}' | grep -wq backend; then
-              echo "backend container exists"
-              docker container rm -f backend
-              docker rmi ${{ vars.DOCKER_USERNAME }}/api1:latest
-              docker container run -dt --name backend -p 3000:3000 --network lmsnetwork \
-               -e DATABASE_URL=postgresql://postgres:password@lmsdb:5432/postgres \
-               ${{ vars.DOCKER_USERNAME }}/api1:latest
-          else 
-             docker container run -dt --name backend -p 3000:3000 --network lmsnetwork \
-                -e DATABASE_URL=postgresql://postgres:password@lmsdb:5432/postgres \
-                ${{ vars.DOCKER_USERNAME }}/api1:latest
-            fi
+            echo "backend container exists"
+            docker container rm -f backend
+            docker rmi ${{ vars.DOCKER_USERNAME}}/api1:latest
+            docker container run -dt --name backend -p 3000:3000 --network lmsnetwork -e DATABASE_URL=postgresql://postgres:${{ secrets.DB_PASSWORD}}@lmsdb:5432/postgres -e PORT=3000 -e MODE=Prod  ${{ vars.DOCKER_USERNAME}}/api:latest
+          else
+            docker container run -dt --name backend -p 3000:3000 --network lmsnetwork -e DATABASE_URL=postgresql://postgres:${{ secrets.DB_PASSWORD}}@lmsdb:5432/postgres -e PORT=3000 -e MODE=Prod  ${{ vars.DOCKER_USERNAME}}/api:latest
+          fi
 
   frontend:
     needs:
