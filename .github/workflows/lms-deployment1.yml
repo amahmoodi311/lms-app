@@ -105,9 +105,9 @@ jobs:
             echo "frontend container exists"
             docker container rm -f frontend
             docker rmi ${{ vars.DOCKER_USERNAME}}/web1:latest
-            docker container run -dt --name frontend -p 80:80 --network lmsnetwork ${{ vars.DOCKER_USERNAME}}/web:latest
+            docker container run -dt --name frontend -p 80:80 --network lmsnetwork ${{ vars.DOCKER_USERNAME}}/web1:latest
           else
-            docker container run -dt --name frontend -p 80:80 --network lmsnetwork ${{ vars.DOCKER_USERNAME}}/web:latest
+            docker container run -dt --name frontend -p 80:80 --network lmsnetwork ${{ vars.DOCKER_USERNAME}}/web1:latest
           fi
 
       
