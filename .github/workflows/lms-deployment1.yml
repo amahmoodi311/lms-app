@@ -88,16 +88,29 @@ jobs:
         run: docker pull ${{ vars.DOCKER_USERNAME}}/api1:latest
       - name: Run the backend
         run: |
-           if docker ps -a --format '{{ .Names }}' | grep -wq backend; then
-               echo "backend container exists"
-               docker container rm -f backend
-               docker rmi amahmoodi311/api1:latest || true
-               docker pull amahmoodi311/api1:latest
+            IMAGE_NAME="amamhmoodi311/api1:latest"
+            CONTAINER_NAME="backend"
+            NETWORK_NAME="lmsnetwork"
+            DATABASE_URL="postgresql://postgres:${{ secrets.DB_PASSWORD }}@lmsdb:5432/postgres"
+
+            if docker ps -a --format '{{ .Names }}' | grep -wq "$CONTAINER_NAME"; then
+              echo "Stopping and removing $CONTAINER_NAME..."
+              docker rm -f "$CONTAINER_NAME"
             fi
 
-            docker container run -dt --name backend -p 3000:3000 --network lmsnetwork \
-              -e DATABASE_URL=postgresql://postgres:${{ secrets.DB_PASSWORD }}@lmsdb:5432/postgres \
-              amahmoodi311/api1:latest
+            if docker images -q "$IMAGE_NAME" > /dev/null; then
+              docker rmi "$IMAGE_NAME" || true
+            fi
+
+             docker pull "$IMAGE_NAME"
+
+             docker run -dt --name "$CONTAINER_NAME" \
+               -p 3000:3000 \
+               --network "$NETWORK_NAME" \
+               -e DATABASE_URL="$DATABASE_URL" \
+               "$IMAGE_NAME"
+
+               docker ps --filter "name=$CONTAINER_NAME"
 
   frontend:
     needs: 
