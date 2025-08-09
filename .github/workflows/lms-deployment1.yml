@@ -82,15 +82,17 @@ jobs:
       - name: Run the backend
         run: |
           if docker ps -a --format '{{ .Names }}' | grep -wq backend; then
-            echo "backend container exists"
-            docker container rm -f backend
-            docker rmi ${{ vars.DOCKER_USERNAME }}/api1:latest
-            docker container run -dt --name backend -p 3000:3000 --network lmsnetwork \
-              -e DATABASE_URL=postgresql://postgres:password@lmsdb:5432/postgres
-          else
-            docker container run -dt --name backend -p 3000:3000 --network lmsnetwork \
-              -e DATABASE_URL=postgresql://postgres:password@lmsdb:5432/postgres
-          fi
+              echo "backend container exists"
+              docker container rm -f backend
+              docker rmi ${{ vars.DOCKER_USERNAME }}/api1:latest
+              docker container run -dt --name backend -p 3000:3000 --network lmsnetwork \
+               -e DATABASE_URL=postgresql://postgres:password@lmsdb:5432/postgres \
+               ${{ vars.DOCKER_USERNAME }}/api1:latest
+          else 
+             docker container run -dt --name backend -p 3000:3000 --network lmsnetwork \
+                -e DATABASE_URL=postgresql://postgres:password@lmsdb:5432/postgres \
+                ${{ vars.DOCKER_USERNAME }}/api1:latest
+            fi
 
   frontend:
     needs:
