@@ -96,7 +96,7 @@ jobs:
     needs:
       - build
     runs-on: deploy
-     steps:
+    steps:
       - name: pull the image
         run: docker pull ${{ vars.DOCKER_USERNAME}}/web1:latest
       - name: Run the frontend
